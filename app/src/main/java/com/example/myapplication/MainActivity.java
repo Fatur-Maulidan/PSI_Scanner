@@ -1,28 +1,28 @@
 package com.example.myapplication;
 
-import androidx.activity.result.ActivityResultCaller;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.HashMap;
 
-    int indomie = 3;
-    int nutrisari = 5;
-    int beng_beng = 10;
-    int aqua = 9;
+public class MainActivity extends AppCompatActivity {
+    HashMap<String, Barang> barang = new HashMap<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        setDataBarang();
 
         Button btnScan = findViewById(R.id.btnScan);
         btnScan.setOnClickListener(new View.OnClickListener() {
@@ -31,6 +31,13 @@ public class MainActivity extends AppCompatActivity {
                 scanCode();
             }
         });
+    }
+
+    private void setDataBarang() {
+        barang.put("OQ89UYT7XMKL", new Barang("Indomie Rebus Ayam Bawang", 3500, 4));
+        barang.put("0098OPLKJHLO", new Barang("Nutrisari Jeruk", 2500, 5));
+        barang.put("998KALDSKASI", new Barang("Aqua", 3500, 9));
+        barang.put("ASLQEI091239", new Barang("Beng Beng", 5500, 10));
     }
 
     private void scanCode(){
@@ -44,39 +51,11 @@ public class MainActivity extends AppCompatActivity {
 
     ActivityResultLauncher<ScanOptions> barLauncher = registerForActivityResult(new ScanContract(), result -> {
         if(result.getContents() != null){
-            String res = result.getContents();
+            String kode = result.getContents();
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
             builder.setTitle("Result");
-            if(res.equals("OQ89UYT7XMKL")){ // Indomie
-                if(indomie <= 0){
-                    builder.setMessage("Indomie sudah habis");
-                } else {
-                    indomie = indomie - 1;
-                    builder.setMessage("Indomie yang tersedia tersisa : "+String.valueOf(indomie));
-                }
-            } else if (res.equals("0098OPLKJHLO")){ // Nutrisari
-                if(nutrisari <= 0){
-                    builder.setMessage("Nutrisari sudah habis");
-                } else {
-                    nutrisari = nutrisari - 1;
-                    builder.setMessage("Nutrisari yang tersedia tersisa : "+String.valueOf(nutrisari));
-                }
-            } else if (res.equals("998KALDSKASI")){ // Aqua
-                if(aqua <= 0){
-                    builder.setMessage("Aqua sudah habis");
-                } else {
-                    aqua = aqua - 1;
-                    builder.setMessage("Aqua yang tersedia tersisa : "+String.valueOf(aqua));
-                }
-            } else if (res.equals("ASLQEI091239")) { // Beng Beng
-                if(beng_beng <= 0){
-                    builder.setMessage("Beng Beng sudah habis");
-                } else {
-                    beng_beng = beng_beng - 1;
-                    builder.setMessage("Beng Beng yang tersedia tersisa : "+String.valueOf(beng_beng));
-                }
-            }
-            else builder.setMessage("Data tidak ada");
+            builder.setMessage(prosesBarang(kode));
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -85,4 +64,18 @@ public class MainActivity extends AppCompatActivity {
             }).show();
         }
     });
+
+    private String prosesBarang(String kode) {
+        if (! barang.containsKey(kode)) {
+            return "Barang tidak tersedia.";
+        }
+
+        Barang brg = barang.get(kode);
+        if(brg.getStok() == 0){
+            return brg.getNama() + " sudah habis.";
+        }
+        brg.setStok(brg.getStok() - 1);
+
+        return brg.getNama() + " yang tersedia tersisa " + brg.getStok();
+    }
 }
