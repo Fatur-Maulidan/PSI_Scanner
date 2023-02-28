@@ -1,8 +1,6 @@
 package com.example.myapplication;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -25,17 +23,12 @@ public class MainActivity extends AppCompatActivity {
         setDataBarang();
 
         Button btnScan = findViewById(R.id.btnScan);
-        btnScan.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                scanCode();
-            }
-        });
+        btnScan.setOnClickListener(v -> scanCode());
     }
 
     private void setDataBarang() {
-        barang.put("OQ89UYT7XMKL", new Barang("Indomie Rebus Ayam Bawang", 3500, 4));
-        barang.put("0098OPLKJHLO", new Barang("Nutrisari Jeruk", 2500, 5));
+        barang.put("OQ89UYT7XMKL", new Barang("Indomie Rebus Ayam Bawang", 3500, 1));
+        barang.put("0098OPLKJHLO", new Barang("Nutrisari Jeruk", 2500, 2));
         barang.put("998KALDSKASI", new Barang("Aqua", 3500, 9));
         barang.put("ASLQEI091239", new Barang("Beng Beng", 5500, 10));
     }
@@ -56,12 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
             builder.setTitle("Result");
             builder.setMessage(prosesBarang(kode));
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            }).show();
+            builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss()).show();
         }
     });
 
