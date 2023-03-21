@@ -1,36 +1,44 @@
 package com.example.myapplication;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.myapplication.model.BarangModel;
+import com.example.myapplication.model.DefaultResponse;
+import com.example.myapplication.retrofit.ApiService;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
 import java.util.HashMap;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class MainActivity extends AppCompatActivity {
-    HashMap<String, Barang> barang = new HashMap<>();
+
+    EditText et_stok;
+    RadioButton rb1,rb2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        setDataBarang();
+        et_stok = findViewById(R.id.stok);
+        rb1 = findViewById(R.id.tambah);
+        rb2 = findViewById(R.id.kurang);
 
         Button btnScan = findViewById(R.id.btnScan);
         btnScan.setOnClickListener(v -> scanCode());
-    }
-
-    private void setDataBarang() {
-        barang.put("OQ89UYT7XMKL", new Barang("Indomie Rebus Ayam Bawang", 3500, 1));
-        barang.put("0098OPLKJHLO", new Barang("Nutrisari Jeruk", 2500, 2));
-        barang.put("998KALDSKASI", new Barang("Aqua", 3500, 9));
-        barang.put("ASLQEI091239", new Barang("Beng Beng", 5500, 10));
     }
 
     private void scanCode(){
@@ -45,25 +53,52 @@ public class MainActivity extends AppCompatActivity {
     ActivityResultLauncher<ScanOptions> barLauncher = registerForActivityResult(new ScanContract(), result -> {
         if(result.getContents() != null){
             String kode = result.getContents();
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 
-            builder.setTitle("Result");
-            builder.setMessage(prosesBarang(kode));
-            builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss()).show();
+            if(rb1.isChecked()){
+                prosesTambahBarangViaRetrofit(kode,Integer.parseInt(et_stok.getText().toString()));
+            }else if (rb2.isChecked()){
+                prosesKurangBarangViaRetrofit(kode,Integer.parseInt(et_stok.getText().toString()));
+            }
+
         }
     });
 
-    private String prosesBarang(String kode) {
-        if (! barang.containsKey(kode)) {
-            return "Barang tidak tersedia.";
-        }
+    private void prosesKurangBarangViaRetrofit(String kode, int stok){
+        ApiService.endpoint().kurangStokBarang(kode, stok).enqueue(new Callback<DefaultResponse>() {
+            @Override
+            public void onResponse(Call<DefaultResponse> call, Response<DefaultResponse> response) {
+                if(response.isSuccessful()){
+                    Log.d("TAG", "Masuk Sini2");
+                    Toast.makeText(MainActivity.this, "Berhasil", Toast.LENGTH_LONG).show();
+                } else {
+                    Log.d("TAG", "Masuk Sini3");
+                    Toast.makeText(MainActivity.this, "Gagal", Toast.LENGTH_LONG).show();
+                }
+            }
 
-        Barang brg = barang.get(kode);
-        if(brg.getStok() == 0){
-            return brg.getNama() + " sudah habis.";
-        }
-        brg.setStok(brg.getStok() - 1);
+            @Override
+            public void onFailure(Call<DefaultResponse> call, Throwable t) {
+                Log.d("TAG", "Masuk Sini4");
+                Log.d("MainActivity", t.getMessage());
+            }
+        });
+    }
 
-        return brg.getNama() + " yang tersedia tersisa " + brg.getStok();
+    private void prosesTambahBarangViaRetrofit(String kode, int stok){
+        ApiService.endpoint().tambahStokBarang(kode, stok).enqueue(new Callback<DefaultResponse>() {
+            @Override
+            public void onResponse(Call<DefaultResponse> call, Response<DefaultResponse> response) {
+                if(response.isSuccessful()){
+                    Toast.makeText(MainActivity.this, "Berhasil", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Gagal", Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<DefaultResponse> call, Throwable t) {
+                Log.d("MainActivity", t.getMessage());
+            }
+        });
     }
 }
